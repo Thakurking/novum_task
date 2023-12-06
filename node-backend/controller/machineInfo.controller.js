@@ -1,5 +1,10 @@
 const businessLogic = require('../businessLogic/machineInfo');
 
+/**
+ * API to get the get machine info
+ * @param {object} req 
+ * @param {object} res 
+ */
 module.exports.getMachineInfo = async (req, res) => {
     businessLogic.getMachineInfo()
     .then((result) => {
@@ -11,6 +16,11 @@ module.exports.getMachineInfo = async (req, res) => {
     })
 }
 
+/**
+ * API to upsert the machine info to database
+ * @param {object} req 
+ * @param {object} res 
+ */
 module.exports.saveMachineInfo = async (req, res) => {
     businessLogic.saveMachineInfoData(req.body)
     .then((result) => {
