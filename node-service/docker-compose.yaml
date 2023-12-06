@@ -1,7 +1,7 @@
-version: '3'
+version: '2'
 
 services:
-  nodejs:
+  order-service:
     build:
       context: .
       dockerfile: Dockerfile
@@ -24,7 +24,7 @@ services:
       - app-network
     command: ./wait-for.sh db:27017 -- /home/node/app/node_modules/.bin/nodemon app.js 
 
-  db:
+  sql:
     image: mongo:4.1.8-xenial
     container_name: db
     restart: unless-stopped

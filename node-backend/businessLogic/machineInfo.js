@@ -12,12 +12,10 @@ module.exports.getMachineInfo = async () => {
 
 module.exports.saveMachineInfoData = async (data) => {
     try {
-        console.log(data)
         const result = await MachineModel.findOneAndUpdate({machine_id: data.machine_id}, data, {
             new: true,
             upsert: true,
         });
-        console.log(result)
         return { status: 200, message: 'Saved Machine Info' };
     } catch (error) {
         console.log(error)

@@ -14,7 +14,7 @@ app.use(helmet());
 
 const backendRoute = require("./routes/backend.routes");
 
-app.set('views', path.join(__dirname, 'views'))
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use("/node-backend", cors(), backendRoute);
 
