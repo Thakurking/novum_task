@@ -18,7 +18,7 @@ It has two express API, One for fetching the machine data another one for upsert
     npm start
 ```
 ### node-service
-There is a simple scanner.js file in this folder project which uses the js-yaml npm package to read all the docker-compose file and sends it to the node-backend API. which saves the machine info.
+There is a simple scanner.js file in this folder project which uses the js-yaml npm package to read the docker-compose file and sends required details to the node-backend API. which saves the machine info.
 The particular file can be added to the target machine where the docker compose file is located and it can be run using -
 ```bash
     node scanner.js
