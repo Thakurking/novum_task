@@ -1,0 +1,11 @@
+{
+  "name": "novum_task",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:Thakurking/novum_task.git",
+  "author": "neptuntriton <jens.haupt.eu@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "pretty": "^2.0.0"
+  }
+}
