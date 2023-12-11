@@ -1,0 +1,234 @@
+version: '2.3'
+networks:
+  novum-testrig-network:
+    driver: bridge
+    name: novum-testrig-network
+x-default-config:
+  networks:
+    &ref_0
+    - novum-testrig-network
+  restart: always
+
+services:
+  battery-analyzer:
+  # device-manager-8k:
+    networks: *ref_0
+    restart: always
+    # image: 'n0vum/device-manager-8k:v1.0.42-arm64'
+    image: n0vum/battery-analyzer:v1.1.7-arm64
+    container_name: battery-analyzer
+    privileged: true
+    depends_on:
+      communicator-service:
+        condition: service_healthy
+      neware-control-service:
+        condition: service_healthy
+    ports:
+      - '7749:7749'
+    volumes:
+      - './config.jt.json:/usr/src/app/config.json:ro'
+      - './histogram.json:/usr/src/app/histogram.json'
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '--fail'
+        - 'http://localhost:7749/api/device-manager-8k/v1/version'
+      retries: 5
+      timeout: 10s
+      interval: 10s
+      start_period: 20s
+
+
+  scpi-controller:
+    networks: *ref_0
+    restart: always
+    image: n0vum/scpi-controller:v1.0.11-arm64
+    container_name: scpi-controller
+    ports:
+      - '127.0.0.1:8817:3000'
+    env_file:
+      - .env 
+    devices:
+      - '/dev/ttyAMA0:/dev/ttyAMA0'
+      - '/dev/gpiomem:/dev/gpiomem'
+    volumes:
+      - './config.scpi.json:/usr/src/app/config.json:ro'
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '--fail'
+        - 'http://localhost:3000/api/v0/info'
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      influx:
+        condition: service_healthy
+
+  temperature-monitor:
+    networks: *ref_0
+    restart: always
+    image: n0vum/temperature-monitor:v1.0.0-arm64
+    container_name: temperature-monitor
+    privileged: true
+    ports: 
+      - '127.0.0.1:8815:3000'
+    env_file:
+      - .env
+    volumes:
+      - './config.scpi.json:/usr/src/app/config.json'
+
+  influx:
+    networks: *ref_0
+    restart: always
+    image: 'influxdb:2.1-alpine'
+    container_name: influx
+    ports:
+      - '8086:8086'
+    volumes:
+      - '${DATA_PATH}/influx/data:/var/lib/influxdb2'
+      - '${DATA_PATH}/influx/config:/etc/influxdb2'
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        - CMD
+        - influx
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  telegraf:
+    networks: *ref_0
+    restart: always
+    image: 'telegraf:1.21'
+    container_name: telegraf
+    volumes:
+      - '/:/hostfs:ro'
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+      - './telegraf.conf:/etc/telegraf/telegraf.conf:ro'
+      - '/sys:/host/sys:ro'
+      - '/proc:/host/proc:ro'
+      - '/etc:/host/etc:ro'
+    env_file:
+      - .env
+    user: 'telegraf:1000'
+    depends_on:
+      influx:
+        condition: service_healthy
+
+  portainer:
+    networks: *ref_0
+    restart: always
+    image: 'portainer/portainer-ce:2.11.0-alpine'
+    container_name: portainer
+    ports:
+      - '9443:9443'
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/${DATA_PATH}/portainer/data:/data'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'wget --spider http://localhost:9000'
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  neware-control-service:
+    networks: *ref_0
+    restart: always
+    image: 'n0vum/neware-control-service:py3.10'
+    # image: 'n0vum/neware-control-service:py3.10-arm64'
+    container_name: neware-control-service
+    ports:
+      - '127.0.0.1:8817:6543'
+    devices:
+      - '/dev/ttyAMA0:/dev/ttyAMA0'
+      - '/dev/gpiomem:/dev/gpiomem'
+    env_file:
+      - .env
+    volumes:
+      - ./neware_config.yaml:/usr/local/etc/devices/Neware/BTS4000/rest-api/config.yaml
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '--fail'
+        - 'http://localhost:6543/api/v0/info'
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      influx:
+        condition: service_healthy
+
+  communicator-service:
+    networks: *ref_0
+    restart: always
+    image: 'n0vum/communicator-service:v1.7.1'
+    container_name: communicator-service
+    ports:
+      - '127.0.0.1:8813:8813'
+      - '127.0.0.1:8808:8808'
+    volumes:
+      - '/dev:/dev'
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '--fail'
+        - 'http://localhost:8808/api/communicator-service/v1/version'
+      retries: 5
+      timeout: 10s
+      interval: 10s
+      start_period: 20s
+    privileged: true
+
+  certbot:
+    networks: *ref_0
+    restart: 'no'
+    container_name: certbot
+    build:
+      context: .
+      dockerfile: ./certbot/Dockerfile
+    image: certbot-docker
+    volumes:
+      - '${DATA_PATH}/certbot/conf:/etc/letsencrypt'
+      - '${DATA_PATH}/certbot/www:/var/www/certbot'
+      - '${LOG_PATH}/certificate_renewals:/var/log/letsencrypt'
+    environment:
+      - 'HETZNER_DNS_API_TOKEN=${HETZNER_DNS_API_TOKEN:?err}'
+    command: certbot renew
+
+  dns:
+    networks: *ref_0
+    restart: always
+    image: 'cytopia/bind:stable-0.28'
+    container_name: dns
+    ports:
+      - '127.0.0.53:53:53/tcp'
+      - '127.0.0.53:53:53/udp'
+      - '172.16.1.10:53:53/tcp'
+      - '172.16.1.10:53:53/udp'
+    env_file:
+      - dns/env.bind
+
+  nginx:
+    networks: *ref_0
+    restart: always
+    container_name: nginx
+    image: 'nginx:mainline'
+    volumes:
+      - './nginx/conf.d/:/etc/nginx/conf.d/:ro'
+      - './nginx/static/:/var/www/static/:ro'
+      - '${DATA_PATH}/certbot/conf:/etc/letsencrypt'
+      - '${DATA_PATH}/certbot/www:/var/www/certbot'
+    ports:
+      - '80:80'
+      - '443:443'

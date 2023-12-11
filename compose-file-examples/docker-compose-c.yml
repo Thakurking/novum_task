@@ -1,0 +1,188 @@
+version: '2.3'
+networks:
+  novum-testrig-network:
+    driver: bridge
+    name: novum-testrig-network
+x-default-config:
+  networks: &ref_0
+    - novum-testrig-network
+  restart: always
+services:
+  battery-analyzer:
+    networks: *ref_0
+    restart: always
+    image: 'n0vum/battery-analyzer:v1.1.8-arm64'
+    container_name: battery-analyzer
+    privileged: true
+    depends_on:
+      communicator-service:
+        condition: service_healthy
+    ports:
+      - '7749:7749'
+    volumes:
+      - './config.scaniapoc.json:/usr/src/app/config.json:ro'
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '--fail'
+        - 'http://localhost:7749/api/battery-analyzer/v1/version'
+      retries: 5
+      timeout: 10s
+      interval: 10s
+      start_period: 20s
+  bms-cell-voltage-monitor:
+    network_mode: host
+    restart: always
+    image: 'n0vum/bms-cell-voltage-monitor:v0.3.2-arm64'
+    container_name: bms-cell-voltage-monitor
+    devices:
+      - '/dev/gpiomem:/dev/gpiomem'
+    volumes:
+      - './device-config.scaniapoc.json:/usr/local/service/device-config.json:ro'
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '--fail'
+        - 'http://localhost:8819/api/v0/info'
+      retries: 5
+      timeout: 10s
+      interval: 10s
+      start_period: 20s
+  itech-control-service:
+    networks: *ref_0
+    restart: always
+    image: 'n0vum/itech-control-service:v1.2.1-arm64'
+    container_name: itech-control-service
+    ports:
+      - '8817:6543'
+    env_file:
+      - .env
+    volumes:
+      - >-
+        ./config.itech-control.yaml:/usr/local/etc/devices/SCPI/ITECH/rest-api/config.yaml
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - '-q'
+        - '--spider'
+        - '--tries=1'
+        - '--timeout=5'
+        - 'http://localhost:6543/api/v0/info'
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      influx:
+        condition: service_healthy
+  influx:
+    networks: *ref_0
+    restart: always
+    image: 'influxdb:2.1-alpine'
+    container_name: influx
+    ports:
+      - '8086:8086'
+    volumes:
+      - '${DATA_PATH}/influx/data:/var/lib/influxdb2'
+      - '${DATA_PATH}/influx/config:/etc/influxdb2'
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'influx ping --host=$${INFLUX_URL}'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  telegraf:
+    networks: *ref_0
+    restart: always
+    image: 'telegraf:1.21'
+    container_name: telegraf
+    volumes:
+      - '/:/hostfs:ro'
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+      - './telegraf.conf:/etc/telegraf/telegraf.conf:ro'
+    env_file:
+      - .env
+    user: 'telegraf:1000'
+    depends_on:
+      influx:
+        condition: service_healthy
+  portainer:
+    networks: *ref_0
+    restart: always
+    image: 'portainer/portainer-ce:2.11.0-alpine'
+    container_name: portainer
+    ports:
+      - '9443:9443'
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '${DATA_PATH}/portainer/data:/data'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'wget --spider http://localhost:9000'
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  communicator-service:
+    networks: *ref_0
+    restart: always
+    image: 'n0vum/communicator-service:v1.7.1'
+    container_name: communicator-service
+    ports:
+      - '8813:8813'
+      - '8808:8808'
+    volumes:
+      - '/dev:/dev'
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '--fail'
+        - 'http://localhost:8808/api/communicator-service/v1/version'
+      retries: 5
+      timeout: 10s
+      interval: 10s
+      start_period: 20s
+    privileged: true
+  certbot:
+    networks: *ref_0
+    restart: 'no'
+    container_name: certbot
+    build:
+      context: .
+      dockerfile: ./certbot/Dockerfile
+    image: certbot-docker
+    volumes:
+      - '${DATA_PATH}/certbot/conf:/etc/letsencrypt'
+      - '${DATA_PATH}/certbot/www:/var/www/certbot'
+      - '${LOG_PATH}/certbot:/var/log/letsencrypt'
+    environment:
+      - 'HETZNER_DNS_API_TOKEN=${HETZNER_DNS_API_TOKEN:?err}'
+    command: certbot renew
+  nginx:
+    networks: *ref_0
+    restart: always
+    container_name: nginx
+    image: 'nginx:mainline'
+    volumes:
+      - './nginx/conf.d/:/etc/nginx/conf.d/:ro'
+      - './nginx/static/:/var/www/static/:ro'
+      - '${DATA_PATH}/certbot/conf:/etc/letsencrypt'
+      - '${DATA_PATH}/certbot/www:/var/www/certbot'
+    ports:
+      - '80:80'
+      - '443:443'
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

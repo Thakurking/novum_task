@@ -1,0 +1,31 @@
+version: "2.3"
+
+networks:
+  test-network:
+    driver: bridge
+    name: test-network
+
+services:
+  mongo:
+    networks: &ref_0
+      - test-network
+
+    image: mongo:4.0.5
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secret
+      - MONGO_INITDB_DATABASE=compose
+    ports:
+      - "127.0.0.1:27017:27017" # only internally open on localhost to enable forwarding by ssh
+    restart: always
+    healthcheck:
+      test:
+        - CMD
+        - mongo
+        - --quiet
+        - 127.0.0.1/test
+        - --eval
+        - "quit(db.runCommand({ ping: 1 }).ok ? 0 : 1)"
+      timeout: 10s
+      retries: 10
+    command: mongod -vv # specifiy verbosity with 1-5 v or none for default 0
