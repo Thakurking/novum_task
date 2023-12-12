@@ -3,7 +3,14 @@ const fs = require('fs');
 const path = require('path')
 const axios = require('axios');
 
-const fileapth = path.join(__dirname, 'docker-compose.yaml')
+let fileName
+fs.readdirSync(__dirname).forEach(file => {
+    if (file.includes('docker-compose')) {
+        fileName = file
+    }
+})
+
+const fileapth = path.join(__dirname, fileName)
 
 // unique machine id
 // unique for each machine
