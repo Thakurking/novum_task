@@ -17,20 +17,36 @@ import {saveMachineInfoData, getMachineInfoData} from '../businessLogic/machineI
 //         });
 // }
 
-export class GetMachineInfo {
-    constructor() {
-        this.getMachineInfo = this.getMachineInfo.bind(this)
-    }
+// export class GetMachineInfo {
+//     constructor() {
+//         this.getMachineInfo = this.getMachineInfo.bind(this)
+//     }
 
-    getMachineInfo(req: Request, res: Response) {
-        return getMachineInfoData()
-        .then((result: object) => {
-            res.status(200).json(result);
-        })
-        .catch((error: object) => {
-            res.status(500).json(error);
-        })
-    }
+//     getMachineInfo(req: Request, res: Response) {
+//         return getMachineInfoData()
+//         .then((result: object) => {
+//             res.status(200).json(result);
+//         })
+//         .catch((error: object) => {
+//             res.status(500).json(error);
+//         })
+//     }
+// }
+
+export async function getMachineInfo(req: Request, res: Response) {
+  try {
+    const result = await getMachineInfoData();
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+  // return getMachineInfoData()
+  // .then((result: object) => {
+  //     res.status(200).json(result);
+  // })
+  // .catch((error: object) => {
+  //     res.status(500).json(error);
+  // })
 }
 
 // /**
