@@ -1,41 +1,32 @@
-import express, { Application } from "express";
-import helmet from "helmet";
 import dotenv from "dotenv";
-import { CronJob } from "cron";
-import { fileapath, composeReader } from "./scanner";
+import { filepath, composeReader, composeCompare, machine_id } from "./scanner";
 
 dotenv.config();
 
-const app: Application = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+let hash_store: any[] = []
 
-app.use(helmet());
-
-const job = new CronJob(
-  "* * * * * *",
-  function () {
-    console.log("Scanning Docker Compose File");
-    composeReader(fileapath);
-  },
-  null,
-  true,
-  "Asia/Kolkata"
+const intervalId = setInterval(
+  composeReaderCallBack,
+  10000,
+  filepath,
+  composeCompare,
+  machine_id,
+  composeReader
 );
 
-job.start();
-
-const PORT = process.env.PORT || 5001;
-
-const server = app
-  .listen(PORT, () => {
-    console.log(`Scanner Server is running on ${PORT}`);
-  })
-  .on("error", (error) => {
-    throw new Error(error.message);
-  });
-
-process.on("unhandledRejection", (err, promise) => {
-  console.log(`Logged Error ${err}`);
-  server.close(() => process.exit(1));
-});
+async function composeReaderCallBack(
+  filepath: string,
+  composeCompare: any,
+  machine_id: string,
+  composeReader: any
+): Promise<void> {
+  try {
+    const result = await composeCompare(filepath, hash_store, machine_id);
+    if (!result.status) {
+      await composeReader(filepath);
+    }
+    console.log('Hash Store =', hash_store)
+  } catch (error) {
+    console.log(error)
+  }
+}
