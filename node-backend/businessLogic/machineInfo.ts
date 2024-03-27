@@ -49,11 +49,23 @@ export async function getMachineInfoData(): Promise<{
 //     }
 // }
 
+// type compose_body = {
+//   version: string;
+//   services: string[];
+//   images: string[];
+//   file_name: string;
+// };
+
+type services_body_type = {
+  service_name: string;
+  image: string;
+  container_name: string;
+  volumes: string[];
+}
 type compose_body = {
   version: string;
-  services: string[];
-  images: string[];
   file_name: string;
+  services: services_body_type[];
 };
 
 /**
@@ -69,6 +81,11 @@ export async function saveMachineInfoData(
 ): Promise<{ status: number; message: string }> {
   console.log('compose object in api ==>', compose_object)
   try {
+    let obj = {
+      compose_file: compose_object.file_name,
+      compose_version: compose_object.version,
+      service_list: compose_object.services
+    }
     const compose_file = await MachineModel.findOne(
       {
         machine_id: machine_id,
@@ -85,7 +102,7 @@ export async function saveMachineInfoData(
     if (compose_file === null) {
       const machine_model = new MachineModel({
         machine_id: machine_id,
-        compose_details: compose_object
+        services: obj
       })
       const result = await machine_model.save();
       console.log('saved new file data',result)
@@ -110,23 +127,25 @@ export async function saveMachineInfoData(
           machine_id: machine_id
         },
         {
-          compose_details: {
+          services: {
             $elemMatch: {
-              file_name: compose_object.file_name,
+              compose_file: compose_object.file_name,
             },
           },
         }
       )
       console.log('found compose with file match', compose_file_elem)
-      if (compose_file_elem?.compose_details.length) {
+      if (compose_file_elem?.services.length) {
         const compose_upsert = await MachineModel.updateOne(
-          { machine_id: machine_id, "compose_details.file_name": compose_object.file_name },
+          { machine_id: machine_id, "services.compose_file": compose_object.file_name },
           {
             $set: {
-              "compose_details.$.services": compose_object.services,
-              "compose_details.$.images": compose_object.images,
-              "compose_details.$.version": compose_object.version,
-              "compose_details.$.file_name": compose_object.file_name,
+              "services.$.compose_version": compose_object.version,
+              "services.$.service_list": compose_object.services
+              // "compose_details.$.services": compose_object.services,
+              // "compose_details.$.images": compose_object.images,
+              // "compose_details.$.version": compose_object.version,
+              // "compose_details.$.file_name": compose_object.file_name,
             }
           },
           {
@@ -143,7 +162,7 @@ export async function saveMachineInfoData(
           },
           {
             $push: {
-              compose_details: compose_object
+              services: obj
             },
           },
         );

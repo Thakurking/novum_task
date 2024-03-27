@@ -52,33 +52,57 @@ config.path_config.forEach((config) => {
 export const machine_id = config.machine_id;
 
 export async function composeReader(file_path: string, file_name: string): Promise<void> {
-  console.log('Entered Compose Reader')
   try {
+    type services_body_type = {
+      service_name: string;
+      image: string;
+      container_name: string;
+      volumes: string[];
+    }
     type compose_body = {
       version: string;
-      services: string[];
-      images: string[];
       file_name: string;
+      services: services_body_type[];
     };
-    // let doc: any;
-    // file_path_array.forEach(async (val, index) => {
-    //   doc = yaml.load(fs.readFileSync(val.base_url, "utf-8"));
-    //   const api_body = {
-    //     version: doc.version,
-    //     services: Object.keys(doc.services),
-    //     images: Object.values(doc.services).map((val: any) => val.image),
-    //     file_name: val.file_name,
-    //   };
-    //   compose_object.push(api_body);
-    // });
+    let service_list: services_body_type[] = []
     let doc: any = yaml.load(fs.readFileSync(file_path, "utf-8"));
-    let compose_object: compose_body = {
-      file_name: file_name,
-      version: doc.version,
-      images: Object.values(doc.services).map((val: any) => val.image),
-      services: Object.keys(doc.services)
+    // console.log('doc ==>', doc)
+    // let compose_object: compose_body = {
+    //   file_name: file_name,
+    //   version: doc.version,
+    //   images: Object.values(doc.services).map((val: any) => val.image),
+    //   services: Object.keys(doc.services)
+    // }
+    const services = doc.services;
+    // let services_compose_object: compose_body = {
+    //   version: doc.version,
+    //   file_name: file_name,
+    // }
+    for (const key in services) {
+      service_list.push({
+        service_name: key,
+        image: services[key].image,
+        container_name: services[key].container_name,
+        volumes: services[key].volumes
+      })
     }
-    console.log('consoling object before api call',compose_object)
+    let compose_object: compose_body = {
+      version: doc.version,
+      file_name: file_name,
+      services: service_list
+    }
+    console.log(compose_object)
+    // Object.keys(doc.services).map((service_val) => {
+    //   Object.values(doc.services).map((image_val: any) => {
+    //     services_compose_object.push({
+    //       service_name: service_val,
+    //       file_name: file_name,
+    //       version: doc.version,
+    //       image: image_val.image,
+    //       // container_name: 
+    //     });
+    //   })
+    // })
     const result = await axios.post(`${process.env.MACHINE_API_URL}`, {
       machine_id,
       compose_object,
@@ -106,33 +130,18 @@ export async function composeCompare(
 ): Promise<void> {
   try {
     file_path_array.forEach(async (val) => {
-      // console.log('file path array value', val)
-      // console.log('hash store entry point', hash_store)
       let fileBuffer = fs.readFileSync(val.base_url)
       const hex = crypto
         .createHmac("sha256", config.machine_id)
         .update(fileBuffer)
         .digest("hex");
-      // if (hash_store === undefined) {
-      //   console.log('hash store undefined with file name ==>', val.file_name)
-      //   hash_store = {
-      //     machine_id: machine_id,
-      //     file: []
-      //   }
-      // }
       const objIndex = hash_store.file.findIndex(
         (obj) => obj.file_name === val.file_name
       );
-      // console.log('object index ==>', objIndex)
-      // console.log('testing has before if condition', hash_store)
       if (hash_store.file[objIndex]?.hash !== hex) {
-        // console.log('testing if condition')
         await composeReader(val.base_url, val.file_name);
-        // console.log('end of if')
       }
-      // console.log('log before second if')
       if (objIndex === -1) {
-        // console.log('hash store value',hash_store)
         hash_store.file.push({ file_name: val.file_name, hash: hex });
       } else {
         hash_store.file[objIndex].hash = hex;
