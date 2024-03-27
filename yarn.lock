@@ -61,6 +61,11 @@
   "resolved" "https://registry.npmjs.org/@types/http-errors/-/http-errors-2.0.4.tgz"
   "version" "2.0.4"
 
+"@types/js-yaml@^4.0.9":
+  "integrity" "sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg=="
+  "resolved" "https://registry.npmjs.org/@types/js-yaml/-/js-yaml-4.0.9.tgz"
+  "version" "4.0.9"
+
 "@types/luxon@~3.3.0":
   "integrity" "sha512-jYvz8UMLDgy3a5SkGJne8H7VA7zPV2Lwohjx0V8V31+SqAjNmurWMkk9cQhfvlcnXWudBpK9xPM1n4rljOcHYQ=="
   "resolved" "https://registry.npmjs.org/@types/luxon/-/luxon-3.3.8.tgz"

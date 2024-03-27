@@ -1,11 +1,11 @@
 version: '2'
 
 services:
-  order-service:
+  cart-service:
     build:
       context: .
       dockerfile: Dockerfile
-    image: nodejs
+    image: nodejs:alpine-18
     container_name: nodejs
     restart: unless-stopped
     env_file: .env
@@ -16,7 +16,7 @@ services:
       - MONGO_PORT=$MONGO_PORT
       - MONGO_DB=$MONGO_DB
     ports:
-      - "80:8080"
+      - "5050:8080"
     volumes:
       - .:/home/node/app
       - node_modules:/home/node/app/node_modules
@@ -25,7 +25,7 @@ services:
     command: ./wait-for.sh db:27017 -- /home/node/app/node_modules/.bin/nodemon app.js 
 
   sql:
-    image: mongo:4.1.8-xenial
+    image: mongo:4.1.10-xenial
     container_name: db
     restart: unless-stopped
     env_file: .env

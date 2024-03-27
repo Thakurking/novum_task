@@ -29,3 +29,8 @@ services:
       timeout: 10s
       retries: 10
     command: mongod -vv # specifiy verbosity with 1-5 v or none for default 0
+  node-backend:
+    build:
+      context: ./node-backend
+    ports:
+      - 5000:5000

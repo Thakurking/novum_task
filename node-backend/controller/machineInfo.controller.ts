@@ -74,10 +74,13 @@ export async function getMachineInfo(req: Request, res: Response) {
 
 export async function saveMachineInfo(req: Request, res: Response) {
   try {
+    console.log('request body controller ==>',req.body)
     const result = await saveMachineInfoData(
       req.body.machine_id,
-      req.body.version,
-      req.body.services
+      req.body.compose_object
+      // req.body.version,
+      // req.body.services,
+      // req.body.images
     )
     res.status(200).json(result);
   } catch (error) {

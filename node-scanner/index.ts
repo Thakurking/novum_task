@@ -1,32 +1,53 @@
 import dotenv from "dotenv";
-import { filepath, composeReader, composeCompare, machine_id } from "./scanner";
+import { composeCompare, machine_id } from "./scanner";
 
 dotenv.config();
 
-let hash_store: any[] = []
+type hash_type = {
+  file_name: string;
+  hash: string
+}
+
+type hash_key = {
+  machine_id: string;
+  file: hash_type[];
+};
+
+let hash_store: hash_key = {
+  machine_id: machine_id,
+  file: []
+};
+
+type composeCompareType = (
+  // filepath: string,
+  hash_store: hash_key,
+  // machine_id: string
+) => void;
+
+// type composeReaderType = (filepath: string) => void;
 
 const intervalId = setInterval(
   composeReaderCallBack,
   10000,
-  filepath,
+  // filepath,
   composeCompare,
   machine_id,
-  composeReader
+  // composeReader
 );
 
 async function composeReaderCallBack(
-  filepath: string,
-  composeCompare: any,
+  // filepath: string,
+  composeCompare: composeCompareType,
   machine_id: string,
-  composeReader: any
+  // composeReader: composeReaderType
 ): Promise<void> {
   try {
-    const result = await composeCompare(filepath, hash_store, machine_id);
-    if (!result.status) {
-      await composeReader(filepath);
-    }
-    console.log('Hash Store =', hash_store)
+    const result = await composeCompare(hash_store);
+    // if (!result.status) {
+    //   await composeReader(filepath);
+    // }
+    // console.log("Hash Store =", hash_store);
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 }

@@ -10,7 +10,7 @@ x-default-config:
   restart: always
 
 services:
-  battery-analyzer:
+  battery-analyzer-service:
   # device-manager-8k:
     networks: *ref_0
     restart: always

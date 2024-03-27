@@ -1,3 +1,13 @@
 {
-    "machine_id": "compose_machine_id_1"
+  "machine_id": "compose_machine_id_1",
+  "path_config": [
+    {
+      "file_path": "C:\\Users\\rites\\novum_task\\compose-file-examples",
+      "files": [
+        "docker-compose-a.yml",
+        "docker-compose-b.yml",
+        "docker-compose-c.yml"
+      ]
+    }
+  ]
 }
