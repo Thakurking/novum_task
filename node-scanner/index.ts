@@ -24,7 +24,9 @@ type composeCompareType = (
   // machine_id: string
 ) => void;
 
-// type composeReaderType = (filepath: string) => void;
+type composeReaderType = (filepath: string) => void;
+
+console.log("Entered Scanner")
 
 const intervalId = setInterval(
   composeReaderCallBack,
@@ -42,6 +44,7 @@ async function composeReaderCallBack(
   // composeReader: composeReaderType
 ): Promise<void> {
   try {
+    console.log("Entered Callback");
     const result = await composeCompare(hash_store);
     // if (!result.status) {
     //   await composeReader(filepath);

@@ -1,10 +1,7 @@
-FROM node:16-alpine
+FROM node:16-alpine as BUILD
 
-WORKDIR /usr/src/app/node-scanner
+WORKDIR /app/node-scanner
 
-COPY . .
-# RUN pwd
-# RUN ls
-# RUN cat package.json
+COPY build/index.js /app/node-scanner/build/
 
-# RUN npm i
+CMD ["node", "build/index.js"]

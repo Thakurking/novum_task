@@ -82,7 +82,7 @@ export async function saveMachineInfoData(
   console.log('compose object in api ==>', compose_object)
   try {
     let obj = {
-      compose_file: compose_object.file_name,
+      compose_file_name: compose_object.file_name,
       compose_version: compose_object.version,
       service_list: compose_object.services
     }
@@ -102,8 +102,10 @@ export async function saveMachineInfoData(
     if (compose_file === null) {
       const machine_model = new MachineModel({
         machine_id: machine_id,
-        services: obj
+        // compose_list: obj
       })
+      machine_model.compose_list.push(obj);
+      console.log('machine model compose list log ==>', machine_model.compose_list)
       const result = await machine_model.save();
       console.log('saved new file data',result)
       // const updateCompose = await MachineModel.updateOne(
@@ -127,21 +129,21 @@ export async function saveMachineInfoData(
           machine_id: machine_id
         },
         {
-          services: {
+          compose_list: {
             $elemMatch: {
-              compose_file: compose_object.file_name,
+              compose_file_name: compose_object.file_name,
             },
           },
         }
       )
       console.log('found compose with file match', compose_file_elem)
-      if (compose_file_elem?.services.length) {
+      if (compose_file_elem?.compose_list.length) {
         const compose_upsert = await MachineModel.updateOne(
-          { machine_id: machine_id, "services.compose_file": compose_object.file_name },
+          { machine_id: machine_id, "compose_list.compose_file_name": compose_object.file_name },
           {
             $set: {
-              "services.$.compose_version": compose_object.version,
-              "services.$.service_list": compose_object.services
+              "compose_list.$.compose_version": compose_object.version,
+              "compose_list.$.service_list": compose_object.services
               // "compose_details.$.services": compose_object.services,
               // "compose_details.$.images": compose_object.images,
               // "compose_details.$.version": compose_object.version,
@@ -162,7 +164,7 @@ export async function saveMachineInfoData(
           },
           {
             $push: {
-              services: obj
+              compose_list: obj
             },
           },
         );

@@ -1,4 +1,4 @@
-version: "2.3"
+version: "3.8"
 
 networks:
   test-network:
@@ -6,31 +6,51 @@ networks:
     name: test-network
 
 services:
-  mongo:
+  mongo_db:
     networks: &ref_0
       - test-network
-
-    image: mongo:4.0.5
+    image: mongo:latest
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=secret
       - MONGO_INITDB_DATABASE=compose
-    ports:
+    # ports:
       - "127.0.0.1:27017:27017" # only internally open on localhost to enable forwarding by ssh
     restart: always
-    healthcheck:
-      test:
-        - CMD
-        - mongo
-        - --quiet
-        - 127.0.0.1/test
-        - --eval
-        - "quit(db.runCommand({ ping: 1 }).ok ? 0 : 1)"
-      timeout: 10s
-      retries: 10
-    command: mongod -vv # specifiy verbosity with 1-5 v or none for default 0
+    # networks:
+    #   - test-network
+    # network_mode: host
+    # healthcheck:
+    #   test:
+    #     - CMD
+    #     - mongo
+    #     - --quiet
+    #     - 127.0.0.1/test
+    #     - --eval
+    #     - "quit(db.runCommand({ ping: 1 }).ok ? 0 : 1)"
+      # timeout: 10s
+      # retries: 10
+    # command: mongod -vv # specifiy verbosity with 1-5 v or none for default 0
   node-backend:
+    networks: &ref_0
+      - test-network
     build:
       context: ./node-backend
+    image: node-backend
     ports:
       - 5000:5000
+    # network_mode: host
+    # networks:
+    #   - test-network
+    depends_on:
+      - mongo_db
+  node-scanner:
+    networks: &ref_0
+      - test-network
+    build:
+      context: ./node-scanner
+    image: node-scanner
+    env_file:
+      - /node-scanner/.env
+    volumes:
+      - "C:/Users/rites/novum_task/compose-file-examples:/usr/src/node-scanner"

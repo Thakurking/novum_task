@@ -6,9 +6,9 @@ export const machineSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    services: [
+    compose_list: [
       {
-        compose_file: {
+        compose_file_name: {
           type: String,
           required: true
         },
@@ -32,6 +32,9 @@ export const machineSchema = new mongoose.Schema(
             },
             volumes: {
               type: Array,
+            },
+            image_version: {
+              type: String,
             }
           }
         ]

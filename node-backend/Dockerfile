@@ -1,10 +1,9 @@
-FROM node:16-alpine
+FROM node:16-alpine as BUILD
 
-WORKDIR /usr/src/app/node-backend
+WORKDIR /usr/src/node-backend
 
-COPY . .
-COPY ./database .
-
-RUN ls
+COPY build/index.js /usr/src/node-backend/build/
 
 EXPOSE 5000
+
+CMD ["node", "build/index.js"]

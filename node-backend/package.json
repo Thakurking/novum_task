@@ -3,8 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "server": "npx ts-node index.ts"
+    "server": "npx ts-node index.ts",
+    "build-backend": "node scripts/scripts.js",
+    "dev": "yarn build && node build/index.js",
+    "build-docker": "docker build --no-cache -t node-backend .",
+    "build": "npm run build-backend && npm run build-docker"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +19,7 @@
     "axios": "^1.6.8",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "esbuild": "^0.20.2",
     "express": "^4.19.2",
     "helmet": "^7.1.0",
     "mongoose": "^8.2.3",

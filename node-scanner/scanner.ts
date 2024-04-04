@@ -5,7 +5,7 @@ import axios from "axios";
 import crypto from "crypto";
 import * as config from "./config.json";
 
-let base_path_array: string[] = []
+let base_path_array: Array<string> = []
 
 config.path_config.forEach((val) => {
   base_path_array.push(path.format({
@@ -18,7 +18,7 @@ type file_path_object = {
   file_name: string
 };
 
-let file_path_array: file_path_object[] = [];
+let file_path_array: Array<file_path_object> = [];
 
 config.path_config.forEach((config) => {
   base_path_array.forEach((base_url) => {
@@ -57,12 +57,13 @@ export async function composeReader(file_path: string, file_name: string): Promi
       service_name: string;
       image: string;
       container_name: string;
-      volumes: string[];
+      volumes: Array<string>;
+      image_version: string
     }
     type compose_body = {
       version: string;
       file_name: string;
-      services: services_body_type[];
+      services: Array<services_body_type>;
     };
     let service_list: services_body_type[] = []
     let doc: any = yaml.load(fs.readFileSync(file_path, "utf-8"));
@@ -81,9 +82,10 @@ export async function composeReader(file_path: string, file_name: string): Promi
     for (const key in services) {
       service_list.push({
         service_name: key,
-        image: services[key].image,
         container_name: services[key].container_name,
-        volumes: services[key].volumes
+        image: services[key].image,
+        volumes: services[key].volumes,
+        image_version: services[key].image.split(":")[1]
       })
     }
     let compose_object: compose_body = {
