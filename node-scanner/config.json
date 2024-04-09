@@ -1,13 +1,8 @@
 {
   "machine_id": "compose_machine_id_1",
   "path_config": [
-    {
-      "file_path": "/usr/src/node-scanner",
-      "files": [
-        "docker-compose-a.yml",
-        "docker-compose-b.yml",
-        "docker-compose-c.yml"
-      ]
-    }
+    "/usr/src/node-scanner/docker-compose-a.yml",
+    "/usr/src/node-scanner/docker-compose-b.yml",
+    "/usr/src/node-scanner/docker-compose-c.yml"
   ]
 }

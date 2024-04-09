@@ -39,7 +39,15 @@ export const machineSchema = new mongoose.Schema(
           }
         ]
       }
-    ]
+    ],
+    free_disk_space: {
+      type: String,
+      required: true
+    },
+    total_disk_space: {
+      type: String,
+      required: true
+    }
     // compose_details: [
     //   {
     //     version: {

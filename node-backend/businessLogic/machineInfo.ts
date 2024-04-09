@@ -1,20 +1,6 @@
 // import MachineModel from '../database/model/machine.schema';
 import MachineModel from "../database/connection/machine.model";
 
-// /**
-//  * Business Logic to get machine info
-//  * @returns {object}
-//  */
-// module.exports.getMachineInfo = async () => {
-//     try {
-//         const machineData = await MachineModel.find({});
-//         return machineData
-//     } catch (error) {
-//         console.log(error);
-//         throw new Error({status: 500, message: 'Internal Server Error'});
-//     }
-// }
-
 /**
  * 
  * @returns object
@@ -31,31 +17,6 @@ export async function getMachineInfoData(): Promise<{
   }
 }
 
-// /**
-//  * Business Logic to save the machine info to database
-//  * @param {object} data 
-//  * @returns {object}
-//  */
-// module.exports.saveMachineInfoData = async (data) => {
-//     try {
-//         const result = await MachineModel.findOneAndUpdate({machine_id: data.machine_id}, data, {
-//             new: true,
-//             upsert: true,
-//         });
-//         return { status: 200, message: 'Saved Machine Info' };
-//     } catch (error) {
-//         console.log(error)
-//         throw new Error({ status: 500, message: 'Internal Server Error' });
-//     }
-// }
-
-// type compose_body = {
-//   version: string;
-//   services: string[];
-//   images: string[];
-//   file_name: string;
-// };
-
 type services_body_type = {
   service_name: string;
   image: string;
@@ -66,6 +27,8 @@ type compose_body = {
   version: string;
   file_name: string;
   services: services_body_type[];
+  free_disk_space: string;
+  total_disk_space: string;
 };
 
 /**
@@ -90,39 +53,18 @@ export async function saveMachineInfoData(
       {
         machine_id: machine_id,
       },
-      // {
-      //   compose_details: {
-      //     $elemMatch: {
-      //       file_name: compose_object.file_name,
-      //     },
-      //   },
-      // }
     );
     console.log('console compose find ==>',compose_file)
     if (compose_file === null) {
       const machine_model = new MachineModel({
         machine_id: machine_id,
-        // compose_list: obj
+        free_disk_space: compose_object.free_disk_space,
+        total_disk_space: compose_object.total_disk_space,
       })
       machine_model.compose_list.push(obj);
       console.log('machine model compose list log ==>', machine_model.compose_list)
       const result = await machine_model.save();
       console.log('saved new file data',result)
-      // const updateCompose = await MachineModel.updateOne(
-      //   {
-      //     machine_id: machine_id,
-      //     "compose_details.file_name": compose_object.file_name,
-      //   },
-      //   {
-      //     $set: {
-            // "compose_details.$.services": compose_object.services,
-            // "compose_details.$.images": compose_object.images,
-            // "compose_details.$.version": compose_object.version,
-            // "compose_details.$.file_name": compose_object.file_name,
-      //     },
-      //   }
-      // );
-      // console.log(updateCompose)
     } else {
       const compose_file_elem = await MachineModel.findOne(
         {
@@ -143,15 +85,12 @@ export async function saveMachineInfoData(
           {
             $set: {
               "compose_list.$.compose_version": compose_object.version,
-              "compose_list.$.service_list": compose_object.services
-              // "compose_details.$.services": compose_object.services,
-              // "compose_details.$.images": compose_object.images,
-              // "compose_details.$.version": compose_object.version,
-              // "compose_details.$.file_name": compose_object.file_name,
+              "compose_list.$.service_list": compose_object.services,
+              free_disk_space: compose_object.free_disk_space,
+              total_disk_space: compose_object.total_disk_space,
             }
           },
           {
-            // new: true,
             upsert: true,
           }
         );
@@ -160,41 +99,20 @@ export async function saveMachineInfoData(
         const update_compose = await MachineModel.updateOne(
           {
             machine_id: machine_id,
-            // "compose_details.file_name": compose_object.file_name,
           },
           {
             $push: {
               compose_list: obj
             },
+            $set: {
+              free_disk_space: compose_object.free_disk_space,
+              total_disk_space: compose_object.total_disk_space,
+            }
           },
         );
         console.log('pushed new field in existing compose ==>',update_compose)
       }
-      // const update_compose = await MachineModel.updateOne(
-      //   {
-      //     machine_id: machine_id,
-      //     "compose_details.file_name": compose_object.file_name,
-      //   },
-      //   {
-      //     $push: {
-      //       "compose_details": compose_object
-      //     },
-      //   }
-      // );
-      // console.log(update_compose)
     }
-    // await MachineModel.findOneAndUpdate(
-    //   { machine_id: machine_id },
-    //   {
-    //     $set: {
-    //       compose_details: compose_object
-    //     }
-    //   },
-    //   {
-    //     new: true,
-    //     upsert: true,
-    //   }
-    // );
     return { status: 200, message: "Saved Machine Info" };
   } catch (error) {
     console.log(error)
